@@ -9,6 +9,7 @@ export const envSchema = z.object({
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
   APP_URL: z.url().default("http://localhost:3000"),
   APP_TIMEZONE: z.literal("America/Montevideo").default("America/Montevideo"),
+  BETTER_AUTH_SECRET: z.string().min(32, "must be at least 32 characters"),
 });
 
 export type Env = z.infer<typeof envSchema>;

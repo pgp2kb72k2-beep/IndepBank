@@ -3,15 +3,24 @@ import { parseEnv } from "./env";
 
 describe("parseEnv", () => {
   it("accepts a valid postgres URL and applies defaults", () => {
-    const env = parseEnv({ DATABASE_URL: "postgresql://u:p@localhost:5432/db" });
+    const env = parseEnv({
+      DATABASE_URL: "postgresql://u:p@localhost:5432/db",
+      BETTER_AUTH_SECRET: "x".repeat(32),
+    });
     expect(env.NODE_ENV).toBe("development");
     expect(env.APP_TIMEZONE).toBe("America/Montevideo");
   });
 
   it("rejects a missing or non-postgres DATABASE_URL without leaking values", () => {
     expect(() => parseEnv({})).toThrow(/DATABASE_URL/);
-    expect(() => parseEnv({ DATABASE_URL: "mysql://secret@host/db" })).toThrow(
-      /^Invalid environment variables: DATABASE_URL$/,
-    );
+    expect(() =>
+      parseEnv({ DATABASE_URL: "mysql://secret@host/db", BETTER_AUTH_SECRET: "x".repeat(32) }),
+    ).toThrow(/^Invalid environment variables: DATABASE_URL$/);
+  });
+
+  it("requires a long auth secret", () => {
+    expect(() =>
+      parseEnv({ DATABASE_URL: "postgresql://localhost/db", BETTER_AUTH_SECRET: "short" }),
+    ).toThrow(/BETTER_AUTH_SECRET/);
   });
 });
