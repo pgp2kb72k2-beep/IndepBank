@@ -3,3 +3,6 @@ import type * as schema from "@/db/schema";
 
 export type Db = NodePgDatabase<typeof schema>;
 export type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
+
+/** Either the root connection or an open transaction. */
+export type Database = Db | Tx;

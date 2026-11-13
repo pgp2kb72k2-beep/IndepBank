@@ -81,6 +81,8 @@ export const organization = pgTable("organization", {
   upcomingDueDays: integer("upcoming_due_days").notNull().default(7),
   highUsageThresholdBp: integer("high_usage_threshold_bp").notNull().default(9000),
   importFileRetention: fileRetention("import_file_retention").notNull().default("discard"),
+  /** Set when the 3-step onboarding is finished. Null = still onboarding. */
+  onboardingCompletedAt: timestamp("onboarding_completed_at", { withTimezone: true }),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });

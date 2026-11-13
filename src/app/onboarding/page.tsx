@@ -1,30 +1,35 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { SignOutButton } from "@/components/sign-out-button";
-import { requireUser } from "@/server/session";
+import { getOnboardingStep, ONBOARDING_PATH } from "@/server/onboarding";
+import { getOrgContext } from "@/server/session";
+import { CompanyForm } from "./company-form";
+import { Stepper } from "./stepper";
 
 export const metadata: Metadata = { title: "Creá tu empresa" };
 
-export default function OnboardingPage() {
+export default function OnboardingCompanyPage() {
   return (
-    <main className="mx-auto w-full max-w-xl flex-1 px-6 py-16">
+    <div className="space-y-8">
+      <Stepper current={1} />
+      <div className="space-y-2">
+        <h1 className="text-2xl font-semibold tracking-tight">Contanos de tu empresa</h1>
+        <p className="text-muted-foreground">
+          En tres pasos vas a tener tu Safe-to-Spend: el capital que realmente podés usar.
+        </p>
+      </div>
       <Suspense fallback={<p className="text-muted-foreground text-sm">Cargando…</p>}>
-        <Welcome />
+        <Step />
       </Suspense>
-    </main>
+    </div>
   );
 }
 
-// DECISION: placeholder until stage 4 (onboarding in 3 steps: company → departments → reserves).
-async function Welcome() {
-  const user = await requireUser();
-  return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-semibold tracking-tight">¡Hola, {user.name}!</h1>
-      <p className="text-muted-foreground">
-        Tu cuenta está lista. El siguiente paso es crear tu empresa y sus departamentos.
-      </p>
-      <SignOutButton />
-    </div>
-  );
+async function Step() {
+  const ctx = await getOrgContext();
+  if (ctx) {
+    const step = await getOnboardingStep(ctx);
+    redirect(step === "done" ? "/app" : ONBOARDING_PATH[step]);
+  }
+  return <CompanyForm />;
 }
