@@ -1,26 +1,98 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * IndepBank palette
+ *   night    #020318  background (dark, primary theme)
+ *   electric #1A5CFF  primary actions
+ *   cyan     #00D5F0  accents / highlights
+ * Status colors are used by the Financial Map (green / amber / red).
+ */
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f7f8fc;
+  --foreground: #0b0d24;
+  --card: #ffffff;
+  --card-foreground: #0b0d24;
+  --muted: #eef0f7;
+  --muted-foreground: #5a5f7d;
+  --primary: #1a5cff;
+  --primary-foreground: #ffffff;
+  --secondary: #e8edff;
+  --secondary-foreground: #0b0d24;
+  --accent: #e6fbfe;
+  --accent-foreground: #0b0d24;
+  --destructive: #e5484d;
+  --border: #dfe2ee;
+  --input: #dfe2ee;
+  --ring: #1a5cff;
+  --brand-cyan: #00a9c0;
+  --status-ok: #1f9d6a;
+  --status-warn: #d38b00;
+  --status-bad: #e5484d;
+  --radius: 0.625rem;
+}
+
+.dark {
+  --background: #020318;
+  --foreground: #f4f6ff;
+  --card: #080a26;
+  --card-foreground: #f4f6ff;
+  --muted: #10132f;
+  --muted-foreground: #9aa0c3;
+  --primary: #1a5cff;
+  --primary-foreground: #ffffff;
+  --secondary: #121638;
+  --secondary-foreground: #f4f6ff;
+  --accent: #0d1a3d;
+  --accent-foreground: #f4f6ff;
+  --destructive: #ff5c62;
+  --border: #1b1f45;
+  --input: #1b1f45;
+  --ring: #00d5f0;
+  --brand-cyan: #00d5f0;
+  --status-ok: #2bc48a;
+  --status-warn: #f5a524;
+  --status-bad: #ff5c62;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-brand-cyan: var(--brand-cyan);
+  --color-status-ok: var(--status-ok);
+  --color-status-warn: var(--status-warn);
+  --color-status-bad: var(--status-bad);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    @apply border-border;
   }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "tnum" 1; /* tabular numbers: amounts line up */
+  }
 }

@@ -1,36 +1,86 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# IndepBank
 
-## Getting Started
+> Tu banco te muestra cuánto dinero tenés; IndepBank te ayuda a saber cuánto podés usar.
 
-First, run the development server:
+Plataforma SaaS B2B para pymes. Esta versión construye el **Plan Básico**: Financial Map, Smart Allocation, Safe-to-Spend, obligaciones y alertas.
+
+## Stack
+
+| Capa          | Elección                                                  |
+| ------------- | --------------------------------------------------------- |
+| Framework     | Next.js 16 (App Router) + TypeScript strict               |
+| Base de datos | PostgreSQL 16                                             |
+| ORM           | Drizzle ORM + drizzle-kit (migraciones SQL versionadas)   |
+| Auth          | Better Auth (email + contraseña, 2FA) — etapa 3           |
+| UI            | Tailwind CSS 4 + shadcn/ui, tipografía Geist              |
+| Validación    | Zod                                                       |
+| Tests         | Vitest (lógica, cobertura v8) · Playwright (E2E, etapa 8) |
+| Formato       | Locale `es-UY`, zona horaria `America/Montevideo`         |
+
+## Requisitos
+
+- Node.js 22 o superior
+- pnpm 10 (`corepack enable` lo activa)
+- PostgreSQL 16 (local, Docker o una base gestionada como Neon/Supabase)
+
+## Correrlo en local
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# 1. Dependencias
+pnpm install
+
+# 2. Base de datos (opción Docker)
+docker run --name indepbank-db -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:16
+docker exec indepbank-db createdb -U postgres indepbank_dev
+docker exec indepbank-db createdb -U postgres indepbank_test
+
+# 3. Variables de entorno
+cp .env.example .env.local     # completá los valores
+export $(grep -v '^#' .env.local | xargs)   # o usá direnv / dotenv-cli
+
+# 4. Verificar conexión y aplicar migraciones
+pnpm db:check
+pnpm db:migrate
+
+# 5. Levantar la app
+pnpm dev                      # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+El seed de desarrollo (caso Distribuidora Sur) se agrega en la etapa 8: `pnpm db:seed`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Comando              | Qué hace                                                   |
+| -------------------- | ---------------------------------------------------------- |
+| `pnpm dev`           | Servidor de desarrollo                                     |
+| `pnpm build`         | Build de producción                                        |
+| `pnpm typecheck`     | Chequeo de tipos (TS strict)                               |
+| `pnpm lint`          | ESLint                                                     |
+| `pnpm format`        | Formatea todo con Prettier                                 |
+| `pnpm test`          | Tests unitarios (Vitest)                                   |
+| `pnpm test:coverage` | Tests + cobertura (el motor exige 100%)                    |
+| `pnpm check`         | Tipos + lint + formato + tests: correlo antes de commitear |
+| `pnpm db:generate`   | Genera una migración a partir de `src/db/schema.ts`        |
+| `pnpm db:migrate`    | Aplica migraciones pendientes                              |
+| `pnpm db:check`      | Verifica la conexión a la base                             |
 
-## Learn More
+## Estructura
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+  app/            Rutas (App Router). UI en español rioplatense.
+  components/ui/  Componentes shadcn/ui
+  db/             Esquema y cliente Drizzle (solo servidor)
+  lib/engine/     Motor de cálculo: TypeScript puro, sin DB ni React (etapa 2)
+  env.ts          Variables de entorno validadas con Zod
+drizzle/          Migraciones SQL generadas
+scripts/          Utilidades de línea de comandos
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Convenciones
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Código, tablas, variables y commits en inglés; interfaz en español rioplatense.
+- Dinero siempre en enteros de unidades menores (centésimos, `bigint`). Nunca `float`.
+- Toda consulta se filtra por `organizationId`.
+- Nada de datos financieros en logs.
+- Decisiones abiertas marcadas en el código con `// DECISION:`.
