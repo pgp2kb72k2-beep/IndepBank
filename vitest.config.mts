@@ -9,7 +9,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/lib/**/*.ts"],
-      exclude: ["**/*.test.ts", "**/index.ts", "**/types.ts"],
+      exclude: ["**/*.test.ts", "**/index.ts", "**/types.ts", "**/fixtures/**"],
       thresholds: {
         // The calculation engine must stay fully covered (acceptance criterion).
         "src/lib/engine/**/*.ts": { statements: 100, branches: 100, functions: 100, lines: 100 },
