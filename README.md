@@ -40,7 +40,7 @@ export $(grep -v '^#' .env.local | xargs)   # o usá direnv / dotenv-cli
 
 # 4. Verificar conexión y aplicar migraciones
 pnpm db:check
-pnpm db:migrate
+pnpm db:migrate               # crea las tablas en indepbank_dev
 
 # 5. Levantar la app
 pnpm dev                      # http://localhost:3000
@@ -64,6 +64,20 @@ El seed de desarrollo (caso Distribuidora Sur) se agrega en la etapa 8: `pnpm db
 | `pnpm db:migrate`    | Aplica migraciones pendientes                              |
 | `pnpm db:check`      | Verifica la conexión a la base                             |
 
+## Publicar (Vercel + Neon)
+
+1. Creá una base en [neon.tech](https://neon.tech) y copiá la connection string.
+2. En [vercel.com](https://vercel.com), importá este repositorio y cargá las variables `DATABASE_URL`, `BETTER_AUTH_SECRET` (32+ caracteres al azar) y `APP_URL` (la URL pública).
+3. Deploy. Vercel corre `pnpm vercel-build`, que **aplica las migraciones pendientes** y después hace el build. Cada rama genera su propio link de prueba.
+
+## Seguridad (cómo está armada)
+
+- **Login:** Better Auth con email + contraseña (mínimo 10 caracteres, guardada con hash) y 2FA opcional por app de autenticación. Bloqueo tras 5 intentos por minuto en login, registro y 2FA.
+- **Cookies:** `HttpOnly`, `SameSite=Lax` y `Secure` en producción.
+- **Aislamiento entre empresas:** todo acceso a datos pasa por `src/server/scoped.ts`, que filtra por `organizationId`, controla el rol y registra auditoría en la misma transacción. Una regla de ESLint impide importar la base de datos fuera de `src/server`. Además, la base usa claves foráneas compuestas `(organization_id, id)`: aunque alguien se salteara la app, Postgres no deja vincular datos de dos empresas.
+- **Roles:** `owner` (todo), `admin` (todo menos dueños y borrar la empresa), `viewer` (solo lectura). Siempre queda al menos un dueño.
+- **Rutas protegidas:** `src/proxy.ts` redirige rápido si no hay cookie; la verificación real (sesión en base + membresía + rol) se hace en el servidor en cada página y acción.
+
 ## Estructura
 
 ```
@@ -71,9 +85,11 @@ src/
   app/            Rutas (App Router). UI en español rioplatense.
   components/ui/  Componentes shadcn/ui
   db/             Esquema y cliente Drizzle (solo servidor)
+  server/         Capa de datos con aislamiento por empresa, permisos, auditoría y sesión
   lib/engine/     Motor de cálculo: TypeScript puro, sin DB ni React (etapa 2)
   env.ts          Variables de entorno validadas con Zod
 drizzle/          Migraciones SQL generadas
+tests/integration Tests contra una base Postgres real
 scripts/          Utilidades de línea de comandos
 ```
 

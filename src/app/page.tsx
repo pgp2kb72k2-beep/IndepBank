@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 export default function Home() {
@@ -10,11 +11,15 @@ export default function Home() {
         <span className="text-muted-foreground">Nosotros, cuánto podés usar.</span>
       </h1>
       <p className="text-muted-foreground max-w-xl text-lg">
-        Estamos construyendo el Plan Básico. Pronto vas a poder crear tu empresa desde acá.
+        Repartí cada ingreso entre tus áreas, protegé sueldos, impuestos y reservas, y sabé siempre
+        cuánto capital tenés libre para decidir.
       </p>
-      <div>
-        <Button size="lg" disabled>
-          Crear mi empresa
+      <div className="flex flex-wrap gap-3">
+        <Button size="lg" asChild>
+          <Link href="/registro">Crear mi empresa</Link>
+        </Button>
+        <Button size="lg" variant="outline" asChild>
+          <Link href="/ingresar">Ingresar</Link>
         </Button>
       </div>
     </main>
