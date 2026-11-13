@@ -40,7 +40,11 @@ export function computeSnapshot(input: EngineInput): Snapshot {
   const periodStart = monthStart(asOf);
   const horizonEnd = addDays(asOf, settings.horizonDays);
 
-  const departments = [...input.departments].sort((a, b) => a.sortOrder - b.sortOrder);
+  // Inactive departments keep what was assigned to them but no longer protect a reserve.
+  const departments = [...input.departments]
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((d) => ({ ...d, active: d.active !== false }))
+    .map((d) => ({ ...d, minimumReserve: d.active ? d.minimumReserve : 0n }));
   const acc = new Map<string, DepartmentAccumulator>(
     departments.map((d) => [
       d.id,
@@ -135,6 +139,7 @@ export function computeSnapshot(input: EngineInput): Snapshot {
     return {
       id: d.id,
       name: d.name,
+      active: d.active,
       percentBp: current.percentBp[d.id] ?? 0,
       assigned: a.assigned,
       spent: a.spent,

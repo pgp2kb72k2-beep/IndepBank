@@ -2,7 +2,7 @@
 
 import { Trash2 } from "lucide-react";
 import { useActionState } from "react";
-import { FormStatus, SubmitButton } from "@/components/form-status";
+import { FormStatus, SubmitButton, useClearableResult } from "@/components/form-status";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,8 +10,13 @@ import { createRuleAction, deleteRuleAction } from "../actions";
 
 export function NewRuleForm({ departments }: { departments: { id: string; name: string }[] }) {
   const [result, action, pending] = useActionState(createRuleAction, null);
+  const [visible, clear] = useClearableResult(result);
   return (
-    <form action={action} className="grid gap-3 sm:grid-cols-[1fr_1fr_6rem_auto] sm:items-end">
+    <form
+      action={action}
+      onInput={clear}
+      className="grid gap-3 sm:grid-cols-[1fr_1fr_6rem_auto] sm:items-end"
+    >
       <div className="space-y-2">
         <Label htmlFor="matchText">Si la descripción contiene</Label>
         <Input id="matchText" name="matchText" placeholder="DGI" required minLength={2} />
@@ -37,7 +42,7 @@ export function NewRuleForm({ departments }: { departments: { id: string; name: 
       </div>
       <SubmitButton pending={pending}>Agregar</SubmitButton>
       <div className="sm:col-span-4">
-        <FormStatus result={result} />
+        <FormStatus result={visible} />
         <p className="text-muted-foreground text-xs">
           Si varias reglas coinciden, gana la de mayor prioridad. No importan mayúsculas ni tildes.
         </p>

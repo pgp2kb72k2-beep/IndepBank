@@ -97,6 +97,26 @@ describe("departments and allocation", () => {
     expect(items).toHaveLength(5);
   });
 
+  it("rows without id reuse the department with that name (no duplicates)", async () => {
+    const first = await saveDepartments(ctx, template());
+    // Same payload again, as a stale form would send it: no ids at all.
+    const second = await saveDepartments(ctx, template());
+    expect(second.departments.map((d) => d.id)).toEqual(first.departments.map((d) => d.id));
+    expect(await db.select().from(department)).toHaveLength(6);
+  });
+
+  it("a deactivated department comes back (same id, same history) when re-added by name", async () => {
+    const first = await saveDepartments(ctx, template());
+    const marketingId = first.departments.find((d) => d.name === "Marketing")!.id;
+    const withoutMarketing = template().departments.filter((d) => d.name !== "Marketing");
+    withoutMarketing[0]!.percentBp += 500;
+    await saveDepartments(ctx, { departments: withoutMarketing });
+
+    const back = await saveDepartments(ctx, template());
+    expect(back.departments.find((d) => d.name === "Marketing")?.id).toBe(marketingId);
+    expect(await db.select().from(department)).toHaveLength(6);
+  });
+
   it("updates reserves and audits every change", async () => {
     const { departments } = await saveDepartments(ctx, template());
     const ops = departments[0]!;

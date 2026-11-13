@@ -273,3 +273,28 @@ describe("alerts", () => {
     ]);
   });
 });
+
+describe("deactivated departments", () => {
+  it("keep what they were assigned before the change; their reserve stops counting", () => {
+    const s = computeSnapshot(
+      base({
+        departments: [
+          { id: "a", name: "A", sortOrder: 1, minimumReserve: 100n },
+          { id: "b", name: "B", sortOrder: 2, minimumReserve: 50n, active: false },
+        ],
+        allocationVersions: [
+          { effectiveFrom: "2026-01-01", percentBp: { a: 6000, b: 4000 } },
+          { effectiveFrom: "2026-11-10", percentBp: { a: 10_000 } },
+        ],
+        transactions: [
+          income("before", "2026-11-05", 1_000n), // 600 / 400
+          income("after", "2026-11-12", 1_000n), // 1.000 / 0
+        ],
+      }),
+    );
+    expect(dept(s, "b")).toMatchObject({ active: false, assigned: 400n, minimumReserve: 0n });
+    expect(dept(s, "a")).toMatchObject({ active: true, assigned: 1_600n, percentBp: 10_000 });
+    expect(s.safeToSpend.minimumReserves).toBe(100n);
+    expect(s.reconciliation.difference).toBe(0n);
+  });
+});
