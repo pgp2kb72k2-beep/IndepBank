@@ -10,6 +10,8 @@ import {
   removeMember,
   updateOrganizationSettings,
 } from "@/server/organizations";
+import { DEPARTMENT_TEMPLATE } from "@/lib/validation/departments";
+import { saveDepartments } from "@/server/departments";
 import { can } from "@/server/permissions";
 import { scoped, type OrgContext } from "@/server/scoped";
 import {
@@ -109,7 +111,8 @@ describe("roles against the database", () => {
     expect(roles).toEqual(["admin", "owner", "viewer"]);
   });
 
-  it("an owner can delete the organization", async () => {
+  it("an owner can delete the organization, with all its configuration", async () => {
+    await saveDepartments(owner, { departments: DEPARTMENT_TEMPLATE.map((d) => ({ ...d })) });
     await deleteOrganization(owner);
     await expect(getOrganization(owner)).rejects.toThrow(/not found/);
   });

@@ -3,7 +3,12 @@
 import { Plus, Trash2 } from "lucide-react";
 import { useActionState, useState } from "react";
 import { DepartmentIcon } from "@/components/department-icon";
-import { FormStatus, ReadOnlyNotice, SubmitButton } from "@/components/form-status";
+import {
+  FormStatus,
+  ReadOnlyNotice,
+  SubmitButton,
+  useClearableResult,
+} from "@/components/form-status";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatPercent, parseMoney, parsePercent, type CurrencyCode } from "@/lib/money";
@@ -49,8 +54,11 @@ export function DepartmentsEditor({
   showReserves = false,
   showRecalculate = false,
   readOnly = false,
+  syncKey,
 }: {
   initialRows: EditorRow[];
+  /** Changes when the saved data changes; the editor then reloads `initialRows`. */
+  syncKey?: string;
   currency: CurrencyCode;
   action: (prev: Result, form: FormData) => Promise<Result>;
   submitLabel: string;
@@ -60,17 +68,37 @@ export function DepartmentsEditor({
 }) {
   const [rows, setRows] = useState(() => initialRows.map(withKey));
   const [result, formAction, pending] = useActionState(action, null);
+  const [visibleResult, clearResult] = useClearableResult(result);
+
+  // After a save the server sends fresh rows (new departments now have ids). Reload them,
+  // keeping the "Guardado" message. Without this, saving twice would duplicate new rows.
+  const [syncedKey, setSyncedKey] = useState(syncKey);
+  if (syncKey !== syncedKey) {
+    setSyncedKey(syncKey);
+    setRows(initialRows.map(withKey));
+  }
 
   const parsed = rows.map((r) => ({
     percentBp: parsePercent(r.percent),
-    reserve: showReserves ? parseMoney(r.reserve) : 0n,
+    // An empty reserve means 0, not "invalid".
+    reserve: showReserves && r.reserve.trim() !== "" ? parseMoney(r.reserve) : 0n,
     nameOk: r.name.trim().length > 0,
   }));
+  const names = rows.map((r) => r.name.trim().toLocaleLowerCase("es")).filter(Boolean);
+  const duplicateName = new Set(names).size !== names.length;
   const total = parsed.reduce((sum, p) => sum + (p.percentBp ?? 0), 0);
-  const allValid = parsed.every(
-    (p) => p.percentBp !== null && p.reserve !== null && p.reserve >= 0n && p.nameOk,
-  );
-  const canSave = !readOnly && allValid && total === 10_000;
+  const blocker = parsed.some((p) => !p.nameOk)
+    ? "Completá el nombre de todos los departamentos."
+    : duplicateName
+      ? "Hay dos departamentos con el mismo nombre."
+      : parsed.some((p) => p.percentBp === null)
+        ? "Revisá los porcentajes: usá números como 35 o 12,5."
+        : parsed.some((p) => p.reserve === null || p.reserve < 0n)
+          ? "Revisá las reservas: usá montos como 5.000 o 5.000,50."
+          : total !== 10_000
+            ? "Los porcentajes tienen que sumar exactamente 100%."
+            : null;
+  const canSave = !readOnly && blocker === null;
 
   const payload = JSON.stringify(
     rows.map((r, i) => ({
@@ -87,7 +115,7 @@ export function DepartmentsEditor({
     setRows((current) => current.map((r) => (r.key === key ? { ...r, ...patch } : r)));
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form action={formAction} onInput={clearResult} className="space-y-5">
       {readOnly && <ReadOnlyNotice />}
       <input type="hidden" name="payload" value={payload} />
 
@@ -252,7 +280,11 @@ export function DepartmentsEditor({
           <SubmitButton pending={pending} disabled={!canSave}>
             {submitLabel}
           </SubmitButton>
-          <FormStatus result={result} />
+          {blocker ? (
+            <p className="text-muted-foreground text-sm">{blocker}</p>
+          ) : (
+            <FormStatus result={visibleResult} />
+          )}
         </div>
       )}
     </form>

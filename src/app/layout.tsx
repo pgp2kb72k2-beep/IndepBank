@@ -14,7 +14,7 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es-UY" className={`dark ${GeistSans.variable} ${GeistMono.variable} h-full`}>
       <body className="flex min-h-full flex-col font-sans">{children}</body>

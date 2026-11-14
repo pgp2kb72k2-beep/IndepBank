@@ -75,6 +75,7 @@ export async function updateOrganizationSettings(
 ) {
   assertCan(ctx, "write");
   const patch = organizationSettingsSchema.parse(input);
+  if (Object.keys(patch).length === 0) return getOrganization(ctx, database);
   return database.transaction(async (tx) => {
     const [before] = await tx
       .select()

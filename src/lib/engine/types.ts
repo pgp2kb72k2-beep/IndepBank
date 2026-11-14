@@ -21,6 +21,12 @@ export interface DepartmentInput {
   name: string;
   sortOrder: number;
   minimumReserve: Cents;
+  /**
+   * Deactivated departments must still be passed when an allocation version in force this
+   * month names them: incomes before the change were assigned to them. Their reserve no
+   * longer counts. Default `true`.
+   */
+  active?: boolean;
 }
 
 export interface AllocationVersion {
@@ -88,6 +94,7 @@ export type DepartmentStatus = "ok" | "high_usage" | "over";
 export interface DepartmentResult {
   id: string;
   name: string;
+  active: boolean;
   /** Percentage in force on `asOf`. */
   percentBp: number;
   assigned: Cents;

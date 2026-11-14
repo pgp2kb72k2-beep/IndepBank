@@ -66,8 +66,8 @@ El seed de desarrollo (caso Distribuidora Sur) se agrega en la etapa 8: `pnpm db
 
 ## Publicar (Vercel + Neon)
 
-1. Creá una base en [neon.tech](https://neon.tech) y copiá la connection string.
-2. En [vercel.com](https://vercel.com), importá este repositorio y cargá las variables `DATABASE_URL`, `BETTER_AUTH_SECRET` (32+ caracteres al azar) y `APP_URL` (la URL pública).
+1. Creá una base en [neon.tech](https://neon.tech) (región São Paulo) y copiá la connection string **pooled** (la que tiene `-pooler` en el host), con `sslmode=require`.
+2. En [vercel.com](https://vercel.com), importá este repositorio y cargá las variables `DATABASE_URL` y `BETTER_AUTH_SECRET` (32+ caracteres al azar). `APP_URL` es opcional: si no la cargás, se usa el dominio de Vercel. Los links de prueba de cada rama funcionan solos (login incluido).
 3. Deploy. Vercel corre `pnpm vercel-build`, que **aplica las migraciones pendientes** y después hace el build. Cada rama genera su propio link de prueba.
 
 ## Seguridad (cómo está armada)

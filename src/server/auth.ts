@@ -5,13 +5,13 @@ import { nextCookies } from "better-auth/next-js";
 import { twoFactor } from "better-auth/plugins";
 import { db } from "@/db/client";
 import * as authSchema from "@/db/auth-schema";
-import { env } from "@/env";
+import { appOrigins, env } from "@/env";
 
 const isProduction = env().NODE_ENV === "production";
 
 export const auth = betterAuth({
   appName: "IndepBank",
-  baseURL: env().APP_URL,
+  ...appOrigins(env()), // baseURL + trustedOrigins (production, previews, localhost)
   secret: env().BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, { provider: "pg", schema: authSchema }),
   emailAndPassword: {

@@ -1,7 +1,12 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { FormStatus, ReadOnlyNotice, SubmitButton } from "@/components/form-status";
+import {
+  FormStatus,
+  ReadOnlyNotice,
+  SubmitButton,
+  useClearableResult,
+} from "@/components/form-status";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { deleteCompanyAction, updateCompanyAction } from "./actions";
@@ -17,8 +22,9 @@ interface Values {
 
 export function CompanySettingsForm({ values, readOnly }: { values: Values; readOnly: boolean }) {
   const [result, action, pending] = useActionState(updateCompanyAction, null);
+  const [visible, clear] = useClearableResult(result);
   return (
-    <form action={action} className="space-y-5">
+    <form action={action} onInput={clear} className="space-y-5">
       {readOnly && <ReadOnlyNotice />}
       <fieldset disabled={readOnly} className="grid gap-5 sm:grid-cols-2">
         <Field label="Nombre" htmlFor="name">
@@ -98,7 +104,7 @@ export function CompanySettingsForm({ values, readOnly }: { values: Values; read
       {!readOnly && (
         <div className="flex items-center gap-4">
           <SubmitButton pending={pending}>Guardar cambios</SubmitButton>
-          <FormStatus result={result} />
+          <FormStatus result={visible} />
         </div>
       )}
     </form>
