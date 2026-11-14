@@ -56,6 +56,12 @@ describe("audit log", () => {
     expect(entries[2]?.after).toMatchObject({ horizonDays: 45 });
   });
 
+  it("an empty settings change is a no-op (no crash, no audit entry)", async () => {
+    const before = (await auditFor(ctx.organizationId)).length;
+    await expect(updateOrganizationSettings(ctx, {})).resolves.toMatchObject({ horizonDays: 30 });
+    expect(await auditFor(ctx.organizationId)).toHaveLength(before);
+  });
+
   it("a failed change leaves neither the change nor an audit entry", async () => {
     const s = scoped(ctx);
     await expect(

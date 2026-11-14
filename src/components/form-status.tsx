@@ -1,9 +1,19 @@
 "use client";
 
 import { Check } from "lucide-react";
+import { useState } from "react";
 import { Button, type ButtonProps } from "@/components/ui/button";
 
 type Result = { ok: true; message?: string } | { ok: false; error: string } | null;
+
+/**
+ * Hides the last result as soon as the person edits the form again, so an old message
+ * never describes the current values. Use: `<form onInput={clear}>` + `<FormStatus result={visible} />`.
+ */
+export function useClearableResult(result: Result): [Result, () => void] {
+  const [cleared, setCleared] = useState<Result>(null);
+  return [result === cleared ? null : result, () => setCleared(result)];
+}
 
 /** Shows the result of the last submit: error in red, success briefly in green. */
 export function FormStatus({ result }: { result: Result }) {

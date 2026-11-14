@@ -91,6 +91,12 @@ export async function saveDepartments(
     const scope = scoped(ctx, tx);
     const existing = await scope.findMany(department);
     const byId = new Map(existing.map((d) => [d.id, d]));
+    const claimedIds = new Set(data.departments.flatMap((d) => (d.id ? [d.id] : [])));
+    // A row without id whose name already exists (active or not) reuses that department
+    // instead of creating a duplicate: keeps its history and rules (e.g. a stale form).
+    const byName = new Map(
+      existing.filter((d) => !claimedIds.has(d.id)).map((d) => [d.name.toLocaleLowerCase("es"), d]),
+    );
     const keptIds = new Set<string>();
     const finalPercents = new Map<string, number>();
 
@@ -104,9 +110,11 @@ export async function saveDepartments(
         active: true,
       };
       let id: string;
-      if (input.id) {
-        const current = byId.get(input.id);
+      const reuse = input.id ? undefined : byName.get(input.name.toLocaleLowerCase("es"));
+      if (input.id || reuse) {
+        const current = reuse ?? byId.get(input.id!);
         if (!current) throw new NotFoundError("department");
+        byName.delete(current.name.toLocaleLowerCase("es"));
         id = current.id;
         const changed = (Object.keys(values) as (keyof typeof values)[]).some(
           (key) => current[key] !== values[key],

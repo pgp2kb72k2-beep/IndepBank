@@ -1,8 +1,8 @@
 "use client";
 
 import { Trash2 } from "lucide-react";
-import { useActionState } from "react";
-import { FormStatus, SubmitButton } from "@/components/form-status";
+import { useActionState, useState } from "react";
+import { FormStatus, SubmitButton, useClearableResult } from "@/components/form-status";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,9 +20,10 @@ const selectClass = "border-input bg-background h-10 rounded-md border px-2 text
 
 export function AddMemberForm({ canAddOwner }: { canAddOwner: boolean }) {
   const [result, action, pending] = useActionState(addMemberAction, null);
+  const [visible, clear] = useClearableResult(result);
   const roles: Role[] = canAddOwner ? ["viewer", "admin", "owner"] : ["viewer", "admin"];
   return (
-    <form action={action} className="space-y-3">
+    <form action={action} onInput={clear} className="space-y-3">
       <div className="grid gap-3 sm:grid-cols-[1fr_11rem_auto] sm:items-end">
         <div className="space-y-2">
           <Label htmlFor="email">Email de la persona</Label>
@@ -42,7 +43,7 @@ export function AddMemberForm({ canAddOwner }: { canAddOwner: boolean }) {
           Agregar
         </SubmitButton>
       </div>
-      <FormStatus result={result} />
+      <FormStatus result={visible} />
       <p className="text-muted-foreground text-xs">
         La persona tiene que haber creado su cuenta en IndepBank con ese email.
       </p>
@@ -62,6 +63,18 @@ export function MemberRow({
   canAssignOwner: boolean;
 }) {
   const [roleResult, roleAction, rolePending] = useActionState(changeRoleAction, null);
+  // Controlled select: when a change is rejected (e.g. last owner), go back to the saved role.
+  const [role, setRole] = useState<Role>(member.role);
+  const [handled, setHandled] = useState(roleResult);
+  if (roleResult !== handled) {
+    setHandled(roleResult);
+    if (roleResult && !roleResult.ok) setRole(member.role);
+  }
+  const [savedRole, setSavedRole] = useState(member.role);
+  if (member.role !== savedRole) {
+    setSavedRole(member.role);
+    setRole(member.role);
+  }
   const [removeResult, removeAction, removePending] = useActionState(removeMemberAction, null);
   const roles: Role[] = canAssignOwner ? ["owner", "admin", "viewer"] : ["admin", "viewer"];
   const error = [roleResult, removeResult].find((r) => r && !r.ok) ?? null;
@@ -81,10 +94,13 @@ export function MemberRow({
             <select
               name="role"
               aria-label={`Rol de ${member.name}`}
-              defaultValue={member.role}
+              value={role}
               disabled={rolePending}
               className={selectClass}
-              onChange={(e) => e.currentTarget.form?.requestSubmit()}
+              onChange={(e) => {
+                setRole(e.target.value as Role);
+                e.currentTarget.form?.requestSubmit();
+              }}
             >
               {roles.map((r) => (
                 <option key={r} value={r}>

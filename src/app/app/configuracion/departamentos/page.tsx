@@ -52,8 +52,10 @@ async function Content() {
           }
         />
         <DepartmentsEditor
-          // Remount with fresh data after each save.
-          key={state.currentVersion?.id ?? "none"}
+          syncKey={[
+            state.currentVersion?.id,
+            ...state.departments.map((d) => `${d.id}:${d.updatedAt.getTime()}`),
+          ].join("|")}
           initialRows={state.departments.map((d) => ({
             id: d.id,
             name: d.name,
